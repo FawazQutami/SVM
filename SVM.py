@@ -125,7 +125,7 @@ class SVM(object):
             temp_dict['Bias'] = self.bias
             self.info.append(temp_dict.copy())
 
-    def cost_function(self, x):
+    def linear_function(self, x):
         """
         Hyperplane (w.x - b = 0)
         :param x: {array-like}
@@ -133,26 +133,35 @@ class SVM(object):
         """
         return np.dot(x, self.weights) - self.bias
 
-    def gradient_descent(self, x, y):
+    def gradient_descent(self, xx, yy):
         """
         Gradient Descent -- Sub-gradient descent
-        :param x: {array_like}
-        :param y: {array_like}
+        :param xx: {array_like}
+        :param yy: {array_like}
         :return: None
         """
         # Loop over each sample in X and y
-        for x_i, y_i in zip(x, y):
-            # Calculate the partial derivatives for
-            # f(w, b) = [1 / N * ∑i=1:n max(0, 1 - y_i(w.Tx_i - b))] + λ||w||^2
-            # if y_i(w.Tx_i - b) >= 1, for all 1 <= i <= n
-            condition = y_i * (self.cost_function(x_i)) >= 1
-            # Sub-gradient descent
+        for x_i, y_i in zip(xx, yy):
+            # Calculate the linear condition y.f(x) >= 1
+            #       ---> y_i(w.Tx_i - b) >= 1, for all 1 <= i <= n
+            condition = y_i * (self.linear_function(x_i)) >= 1
+
+            """ Calculate the partial derivatives for:
+                 J = f(w, b) = [1 / N * ∑i=1:n max(0, 1 - y_i(w.Tx_i - b))] + λ||w||^2 # Regularization term
+                 
+                 Hinge Loss = l = max(0, 1 - y_i(w.Tx_i - b)) =
+                        { 0             if y.f(x) >= 1
+                          1 - y.f(x)    otherwise
+            """
             if condition:
+                # J = λ||w||^2
                 # change in weights = 2λw
                 weight_derivative = 2 * self._lambda * self.weights
                 # Update Rule: w = w - α . dw
                 self.weights -= self.alpha * weight_derivative
+
             else:
+                # J = λ||w||^2 + 1 - y_i(w.Tx_i - b)
                 # change in weights = 2 * λ* w - y_i.x_i
                 weight_derivative = 2 * self._lambda * self.weights - np.dot(x_i, y_i)
                 # Update Rule: w = w - α * dw
@@ -168,7 +177,7 @@ class SVM(object):
         :param x:{array_like}
         :return: {array_like} (0 and 1, or nan)
         """
-        model = self.cost_function(x)
+        model = self.linear_function(x)
         # The sign function returns -1 if x < 0, 0 if x==0, 1 if x > 0.
         # nan is returned for nan inputs.
         y_predicted = np.sign(model)
@@ -190,27 +199,26 @@ def plot_svm(svm, X, y):
 
     x_min, x_max = np.amin(X[:, 0]), np.amax(X[:, 0])
     y_min, y_max = np.amin(X[:, 1]), np.amax(X[:, 1])
-
-    # ax.set_ylim(y_min - 3, y_max + 3)
-
-    # Step size
-    step = 0.9
     print(x_min, x_max)
     print(y_min, y_max)
-    xx = np.arange(x_min, x_max, step)  # np.arange(start, stop, step)
+
+    # # Create a mesh to plot:
+    # Step size
+    step = 0.9
+    # np.arange(start, stop, step)
+    xx = np.arange(x_min, x_max, step)
     yy = np.arange(y_min, y_max, step)
 
-    # Create a mesh to plot: np.meshgrid return coordinate matrices from coordinate vectors.
+    # np.meshgrid return coordinate matrices from coordinate vectors.
     x1, x2 = np.meshgrid(xx, yy)
 
     z = svm.predict(np.c_[x1.ravel(), x2.ravel()])
     z = z.reshape(x1.shape)
 
+    # plot contour
     linestyles = ['dashed', 'solid', 'dashed']
     levels = [-0.9, 0.0, 0.9]
     cmap = ListedColormap(['#338BFF', 'red', '#338BFF'])
-
-    # plot contour
     plt.contour(x1, x2, z, levels,
                 cmap=cmap,
                 linestyles=linestyles, )
@@ -223,7 +231,7 @@ def plot_svm(svm, X, y):
                 c=y,
                 cmap=plt.cm.Paired,
                 s=30)
-
+    # Format the plot
     font = {'family': 'serif',
             'color': 'darkred',
             'weight': 'normal',
