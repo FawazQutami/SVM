@@ -188,9 +188,6 @@ def plot_svm(svm, X, y):
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
 
-    plt.xlabel('X')
-    plt.ylabel('y')
-
     x_min, x_max = np.amin(X[:, 0]), np.amax(X[:, 0])
     y_min, y_max = np.amin(X[:, 1]), np.amax(X[:, 1])
 
@@ -200,23 +197,23 @@ def plot_svm(svm, X, y):
     step = 0.9
     print(x_min, x_max)
     print(y_min, y_max)
-    x1 = np.arange(x_min, x_max, step)  # np.arange(start, stop, step)
-    x2 = np.arange(y_min, y_max, step)
+    xx = np.arange(x_min, x_max, step)  # np.arange(start, stop, step)
+    yy = np.arange(y_min, y_max, step)
 
     # Create a mesh to plot: np.meshgrid return coordinate matrices from coordinate vectors.
-    xx, yy = np.meshgrid(x1, x2)
+    x1, x2 = np.meshgrid(xx, yy)
 
-    z = svm.predict(np.c_[xx.ravel(), yy.ravel()])
-    z = z.reshape(xx.shape)
+    z = svm.predict(np.c_[x1.ravel(), x2.ravel()])
+    z = z.reshape(x1.shape)
 
     linestyles = ['dashed', 'solid', 'dashed']
     levels = [-0.9, 0.0, 0.9]
     cmap = ListedColormap(['#338BFF', 'red', '#338BFF'])
 
     # plot contour
-    plt.contour(xx, yy, z, levels,
+    plt.contour(x1, x2, z, levels,
                 cmap=cmap,
-                linestyles=linestyles)
+                linestyles=linestyles, )
 
     # Plot X training points
     plt.scatter(X[:, 0],
@@ -227,8 +224,17 @@ def plot_svm(svm, X, y):
                 cmap=plt.cm.Paired,
                 s=30)
 
-    plt.axis('tight')
+    font = {'family': 'serif',
+            'color': 'darkred',
+            'weight': 'normal',
+            'size': 16,
+            }
+    plt.title('SVM',  fontdict=font)
+    plt.xlabel('X1',  fontdict=font, loc='right')
+    plt.ylabel('X2', fontdict=font, loc='top')
 
+    plt.tight_layout()
+    plt.grid(True)
     plt.show()
 
 
